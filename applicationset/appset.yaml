@@ -1,0 +1,35 @@
+cat <<EOF | oc apply -f -
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: ns-apps
+  namespace: openshift-gitops
+spec:
+  generators:
+  - list:
+      elements:
+      - cluster: local-cluster
+        url: https://api.cluster-c329.sandbox954.opentlc.com:6443
+        env: bgd
+      - cluster: local-cluster
+        url: https://api.cluster-c329.sandbox954.opentlc.com:6443
+        env: bgdk
+      - cluster: managed-cluster-02
+        url: https://api.cluster-0497.0497.sandbox1261.opentlc.com:6443
+        env: bgd
+      - cluster: managed-cluster-02
+        url: https://api.cluster-0497.0497.sandbox1261.opentlc.com:6443
+        env: bgdk        
+  template:
+    metadata:
+      name: '{{cluster}}-{{env}}'
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/danifernandezs/ns-apps.git
+        targetRevision: list-generator
+        path: "apps/bgd/overlays/{{env}}"
+      destination:
+        server: '{{url}}'    
+EOF
