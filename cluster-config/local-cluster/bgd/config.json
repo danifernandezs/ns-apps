@@ -1,7 +1,7 @@
 {
-  "env": "dev",
+  "env": "bgd",
   "cluster": {
-    "owner": "cluster-admin@company.com",
     "name": "local-cluster",
-    "address": "https://api.cluster-058f.sandbox1320.opentlc.com:6443"
+    "address": "https://api.cluster-c329.sandbox954.opentlc.com:6443"
   }
+}
