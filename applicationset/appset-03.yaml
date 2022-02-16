@@ -1,0 +1,70 @@
+apiVersion: mallard.io/v1beta1
+kind: Duck
+metadata:
+  name: quak
+  namespace: openshift-gitops
+spec: {}
+status:
+  # Duck-typing ignores all other aspects of the resource except 
+  # the "decisions" list
+  decisions:
+  - clusterName: managed-cluster-01
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: appset-cm
+  namespace: openshift-gitops
+data:
+  # apiVersion of the target resource
+  apiVersion: mallard.io/v1beta1  
+  # kind of the target resource
+  kind: ducks
+  # status key name that holds the list of Argo CD clusters
+  statusListKey: decisions
+  # The key in the status list whose value is the cluster name found in Argo CD
+  matchKey: clusterName
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: ns-apps
+  namespace: openshift-gitops
+spec:
+  generators:
+    - matrix:
+        generators:
+          # git generator, 'child' #1
+          - git:
+              repoURL: https://github.com/danifernandezs/ns-apps.git
+              revision: matrix-generator
+              directories:
+                - path: apps/bgd/overlays/*
+          # cluster generator, 'child' #2
+          - clusterDecisionResource:
+              # ConfigMap with GVK information for the duck type resource
+              configMapRef: appset-cm  
+              name: quak           # Choose either "name" of the resource or "labelSelector"
+              labelSelector:
+                matchLabels:       # OPTIONAL
+                  duck: spotted
+                matchExpression:   # OPTIONAL
+                - key: duck
+                  operator: In
+                  values:
+                  - "spotted"
+                  - "canvasback"   
+              # OPTIONAL: Checks for changes every 60sec (default 3min)
+              requeueAfterSeconds: 60
+  template:
+    metadata:
+      name: '{{clusterName}}-{{path.basename}}'
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/danifernandezs/ns-apps.git
+        targetRevision: matrix-generator
+        path: '{{path}}'
+      destination:
+        server: '{{clusterName}}'
+
