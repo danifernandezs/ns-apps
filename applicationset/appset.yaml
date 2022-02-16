@@ -7,29 +7,28 @@ metadata:
   namespace: openshift-gitops
 spec:
   generators:
-  - list:
-      elements:
-      - cluster: local-cluster
-        url: https://api.cluster-c329.sandbox954.opentlc.com:6443
-        env: bgd
-      - cluster: local-cluster
-        url: https://api.cluster-c329.sandbox954.opentlc.com:6443
-        env: bgdk
-      - cluster: managed-cluster-02
-        url: https://api.cluster-0497.0497.sandbox1261.opentlc.com:6443
-        env: bgd
-      - cluster: managed-cluster-02
-        url: https://api.cluster-0497.0497.sandbox1261.opentlc.com:6443
-        env: bgdk        
+    - matrix:
+        generators:
+          # git generator, 'child' #1
+          - git:
+              repoURL: https://github.com/danifernandezs/ns-apps.git
+              revision: matrix-generator
+              directories:
+                - path: apps/bgd/overlays/*
+          # cluster generator, 'child' #2
+          - clusters:
+              selector:
+                matchLabels:
+                  argocd.argoproj.io/secret-type: cluster
   template:
     metadata:
-      name: '{{cluster}}-{{env}}'
+      name: '{{name}}-{{path.basename}}'
     spec:
       project: default
       source:
         repoURL: https://github.com/danifernandezs/ns-apps.git
-        targetRevision: list-generator
-        path: "apps/bgd/overlays/{{env}}"
+        targetRevision: matrix-generator
+        path: '{{path}}'
       destination:
-        server: '{{url}}'    
+        server: '{{server}}'    
 EOF
