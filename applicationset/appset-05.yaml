@@ -1,0 +1,42 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: ns-apps
+  namespace: openshift-gitops
+spec:
+  # Parece que no soporta el matrix de matrix
+  # Necesitamos dos placements
+  generators:
+    - matrix:
+        generators:
+          - list:
+              elements:
+                - placement: clusters-dev 
+                - placement: clusters-prod
+          - matrix:
+              generators:
+                # git generator, 'child' #1
+                - git:
+                    repoURL: https://github.com/danifernandezs/ns-apps.git
+                    revision: matrix-generator
+                    directories:
+                      - path: apps/bgd/overlays/*
+                # cluster generator, 'child' #2
+                - clusterDecisionResource:
+                    # go to cm acm-placement in openshift-gitops namespace
+                    configMapRef: acm-placement
+                    labelSelector:
+                      matchLabels:
+                        cluster.open-cluster-management.io/placement: {{placement}}
+                    requeueAfterSeconds: 180
+  template:
+    metadata:
+      name: '{{name}}-{{path.basename}}'
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/danifernandezs/ns-apps.git
+        targetRevision: matrix-generator
+        path: '{{path}}'
+      destination:
+        server: '{{server}}'  

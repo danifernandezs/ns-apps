@@ -1,5 +1,3 @@
-cat <<EOF | oc apply -f -
----
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
@@ -16,10 +14,13 @@ spec:
               directories:
                 - path: apps/bgd/overlays/*
           # cluster generator, 'child' #2
-          - clusters:
-              selector:
+          - clusterDecisionResource:
+              # go to cm acm-placement in openshift-gitops namespace
+              configMapRef: acm-placement
+              labelSelector:
                 matchLabels:
-                  argocd.argoproj.io/secret-type: cluster
+                  cluster.open-cluster-management.io/placement: placement
+              requeueAfterSeconds: 180
   template:
     metadata:
       name: '{{name}}-{{path.basename}}'
@@ -30,5 +31,4 @@ spec:
         targetRevision: matrix-generator
         path: '{{path}}'
       destination:
-        server: '{{server}}'    
-EOF
+        server: '{{server}}'  
