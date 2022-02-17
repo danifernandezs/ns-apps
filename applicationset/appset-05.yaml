@@ -6,6 +6,7 @@ metadata:
 spec:
   # Parece que no soporta el matrix de matrix
   # Necesitamos dos placements
+  # Como el 04, pero paramentrizando la lista de placements para desplegar x apps en x clusters segun placement
   generators:
     - matrix:
         generators:
@@ -15,19 +16,16 @@ spec:
                 - placement: clusters-prod
           - matrix:
               generators:
-                # git generator, 'child' #1
                 - git:
                     repoURL: https://github.com/danifernandezs/ns-apps.git
                     revision: matrix-generator
                     directories:
                       - path: apps/bgd/overlays/*
-                # cluster generator, 'child' #2
                 - clusterDecisionResource:
-                    # go to cm acm-placement in openshift-gitops namespace
                     configMapRef: acm-placement
                     labelSelector:
                       matchLabels:
-                        cluster.open-cluster-management.io/placement: {{placement}}
+                        cluster.open-cluster-management.io/placement: '{{placement}}'
                     requeueAfterSeconds: 180
   template:
     metadata:

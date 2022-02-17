@@ -7,19 +7,20 @@ spec:
   generators:
     - matrix:
         generators:
-          # git generator, 'child' #1
+          # La ruta puede ser a todas las apps o solo a una
           - git:
               repoURL: https://github.com/danifernandezs/ns-apps.git
               revision: matrix-generator
               directories:
                 - path: apps/bgd/overlays/*
-          # cluster generator, 'child' #2
           - clusterDecisionResource:
               # go to cm acm-placement in openshift-gitops namespace
               configMapRef: acm-placement
               labelSelector:
                 matchLabels:
-                  cluster.open-cluster-management.io/placement: placement
+                  # Despliega las apps o app (según ruta) en el placemente destino con (X) clusters
+                  # placement clusters-dev solo a un cluster
+                  cluster.open-cluster-management.io/placement: clusters-dev
               requeueAfterSeconds: 180
   template:
     metadata:

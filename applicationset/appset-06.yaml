@@ -1,0 +1,42 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: ns-apps
+  namespace: openshift-gitops
+spec:
+  generators:
+    # No reconoce el merge
+    - merge:
+        mergeKeys:
+          - server
+        generators:
+          # - clusters:
+          #     values:
+          #       bgd: ''
+          #       bgdk: ''
+          #       app: ''
+          - clusters:
+              selector:
+                matchLabels:
+                  argocd.argoproj.io/bgd: 'bgd'
+              values:
+                bgd: 'bgd' 
+                app: 'bgd'  
+          - clusters:
+              selector:
+                matchLabels:
+                  argocd.argoproj.io/bgdk: 'bgdk'
+              values:
+                bgdk: 'bgdk'  
+                app: 'bgdk'                  
+  template:
+    metadata:
+      name: '{{name}}-{{values.app}}'
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/danifernandezs/ns-apps.git
+        targetRevision: matrix-generator
+        path: 'apps/bgd/overlays/{{values.app}}'
+      destination:
+        server: '{{server}}'  

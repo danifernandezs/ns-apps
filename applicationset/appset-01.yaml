@@ -18,6 +18,8 @@ spec:
               selector:
                 matchLabels:
                   argocd.argoproj.io/secret-type: cluster
+              values:
+                env: 'env'        
   template:
     metadata:
       name: '{{name}}-{{path.basename}}'
